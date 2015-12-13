@@ -1,11 +1,11 @@
-import JJDecoder
-
+import os.path
 import time
 import json
 import pickle
 import pprint
 import requests
 
+from crawler import JJDecoder
 
 UZ_BASE = 'http://booking.uz.gov.ua/'
 
@@ -16,8 +16,11 @@ class UzTownCode:
         if not path:
             path = 'uz_station_codes.txt'
         self.path = path
-        with open(path, 'rb') as f:
-            self.database = pickle.load(f)
+        if os.path.exists(self.path):
+            with open(path, 'rb') as f:
+                self.database = pickle.load(f)
+        else:
+            self.database = dict()
 
     def get(self, station):
         return self.database.get(station, '')
@@ -75,7 +78,8 @@ class UzCrawler:
         self.server = ''
         self.session_id = ''
 
-    def get(self, page):
+    def get(self):
+        page = UZ_BASE
         headers = dict()
         headers['User-Agent'] = self.user_agent
         resp = requests.get(page, headers=headers, cookies=self.cookies)
@@ -87,11 +91,8 @@ class UzCrawler:
         t_stop = raw_token.find(marker_stop, t_start)
         if t_start != -1 and t_stop != -1:
             raw_token = raw_token[t_start + len(marker_start):t_stop]
-            print('TOKEN: ' + raw_token)
             decoded_token = JJDecoder.decode(raw_token)
-            print(decoded_token)
             self.token = decoded_token[decoded_token.find('", "') + 4:-3]
-            print(self.token)
         for c in self.cookies:
             if c.name == 'HTTPSERVERID':
                 self.server = c.value
@@ -119,15 +120,10 @@ class UzCrawler:
         add_headers['Host'] = 'booking.uz.gov.ua'
         add_headers['Proxy-Connection'] = 'keep-alive'
         add_headers['Origin'] = 'http://booking.uz.gov.ua'
-        #add_headers['Cookie'] = '_gv_sessid=%s; _gv_lang=ru; HTTPSERVERID=%s; __utmt=1; ' \
-        #                        '__utma=31515437.2137620103.1434828433.1434828433.1434828433.1; ' \
-        #                        '__utmb=31515437.2.10.1434828433; __utmc=31515437; ' \
-        #                        '__utmz=31515437.1434828433.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)' % (self.session_id, self.server)
         add_headers['User-Agent'] = self.user_agent
         resp = requests.post(UZ_BASE + url, data=post_data,
                              cookies=self.cookies,
                              headers=add_headers)
-        print('uz_post %s - %d' % (url, resp.status_code))
         return resp
 
     def search(self, from_city, to_city, when):
@@ -162,7 +158,7 @@ class UzCrawler:
             print('Error in search')
             pprint.pprint(trains)
             return None
-        #self.cookies = resp.cookies
+        # self.cookies = resp.cookies
         trains = [Train(x) for x in trains]
 
         return trains
@@ -210,7 +206,7 @@ class UzCrawler:
 
 def get_start_page():
     crawler = UzCrawler()
-    resp = crawler.get(UZ_BASE)
+    resp = crawler.get()
     for h in resp.headers:
         pprint.pprint(h)
     pprint.pprint(resp.cookies)
