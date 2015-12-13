@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-import pprint
 import sys
 
 from crawler import UzCrawler
+
+
+def print_train(train):
+    assert isinstance(train, UzCrawler.Train)
+    print('Поезд %s %s %s' % (train.num, train.source.station, train.destination.station))
+    print('\tОтправление: %s\n\tПрибытие: %s' % (train.source.src_date, train.destination.src_date))
+    print('\t', ', '.join(['%s: %d' % (c['title'], c['places']) for c in train.coaches]), sep='')
 
 
 def search(from_city, till_city, date):
     crawler = UzCrawler.UzCrawler()
     crawler.get()
     trains = crawler.search(from_city, till_city, date)
-    pprint.pprint(trains)
+    for t in trains:
+        print_train(t)
 
 
 if __name__ == '__main__':
