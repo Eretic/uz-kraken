@@ -1,4 +1,5 @@
 import re
+import unittest
 
 
 OUTPUT = ''
@@ -32,6 +33,8 @@ def lotu(gv, data):
 
 
 def decode(text):
+    global OUTPUT
+    OUTPUT = ''
     text = re.sub(r'/^\s+|\s+$/g', '', text)
 
     if text.find("\"\'\\\"+\'+\",") == 0:
@@ -252,23 +255,21 @@ def decode(text):
         print('No match: ' + data)
         break
 
-    global OUTPUT
     return OUTPUT
 
 
-def test():
-    with open('jjdecoder_tests.txt', 'r') as tests:
-        req = tests.readline()
-        exp = tests.readline()
-        result = decode(req)
-        if result == exp:
-            print('Test passed')
-        else:
-            print('Input: ' + req)
-            print('Exp: ' + exp)
-            print('Result: ' + result)
-            print('Test FAILED')
+class JJDecoderTest(unittest.TestCase):
+    def test(self):
+        with open('jjdecoder_tests.txt', 'r') as tests:
+            req = tests.readline()
+            exp = tests.readline().strip()
+            result = decode(req)
+            self.assertEqual(exp, result)
+            req = tests.readline()
+            exp = tests.readline()
+            result = decode(req)
+            self.assertEqual(exp, result)
 
 
 if __name__ == '__main__':
-    test()
+    unittest.main()

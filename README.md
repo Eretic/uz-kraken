@@ -1,4 +1,7 @@
 # uz-kraken
+
+[![Build Status](https://travis-ci.org/Eretic/uz-kraken.svg)](https://travis-ci.org/Eretic/uz-kraken)
+
 Monitor tickets on uz.gov.ua
 
 JJDecoder based on [Decoder-JJEncode](https://github.com/jacobsoo/Decoder-JJEncode)
