@@ -19,9 +19,26 @@ def search(from_city, till_city, date):
         lang = 'ru'
     crawler = UzCrawler.UzCrawler(lang)
     crawler.get()
-    trains = crawler.search(from_city, till_city, date)
-    for t in trains:
-        print_train(t)
+    stations = crawler.station(from_city)
+    if not stations:
+        print('Не могу определить что за станция: %s' % from_city)
+        return
+    else:
+        from_station = stations[0]['title']
+    stations = crawler.station(till_city)
+    if not stations:
+        print('Не могу определить что за станция: %s' % till_city)
+        return
+    else:
+        to_station = stations[0]['title']
+
+    print('Поиск поездов в направлении %s - %s на %s' % (from_city, till_city, date))
+    trains = crawler.search(from_station, to_station, date)
+    if trains:
+        for t in trains:
+            print_train(t)
+    else:
+        print('Поезда в заданном направлении не найдены')
 
 
 if __name__ == '__main__':
@@ -33,4 +50,4 @@ if __name__ == '__main__':
     if bad_command:
         print('Available commands:')
         print('%s search <from> <till> <data>\n\t'
-              'f.e. search "Киев-Пассажирский" "Харьков-Пасс"  "24.12.2015" ' % sys.argv[0])
+              'f.e. search Киев Харьков  24.12.2015' % sys.argv[0])

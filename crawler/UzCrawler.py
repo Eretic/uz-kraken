@@ -31,11 +31,15 @@ class UzTownCode:
             self.save()
 
     def put_all(self, data):
-        self.database.update(data)
-        self.save()
+        is_dirty = False
+        for station, station_id in data.items():
+            if station not in self.database:
+                self.database[station] = station_id
+                is_dirty = True
+        if is_dirty:
+            self.save()
 
     def save(self):
-        print('Save database')
         with open(self.path, 'wb') as f:
             pickle.dump(self.database, f)
 
@@ -120,9 +124,8 @@ class UzCrawler:
         ids = {x['title']: x['station_id'] for x in stations['value']}
         codes = UzTownCode()
         codes.put_all(ids)
-        pprint.pprint(stations)
         # self.cookies = resp.cookies
-        return stations
+        return stations['value']
 
     def dump_cookies(self):
         if not self.cookies:
@@ -189,8 +192,6 @@ class UzCrawler:
         if not trains['error']:
             trains = trains['value']
         else:
-            print('Error in search')
-            pprint.pprint(trains)
             return None
         # self.cookies = resp.cookies
         trains = [Train(x) for x in trains]
