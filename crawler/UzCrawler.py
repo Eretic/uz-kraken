@@ -115,10 +115,11 @@ class UzCrawler:
             print(resp.status_code)
             return None
         stations = json.loads(resp.content.decode('utf-8'))
-        ids = {x['title']:x['station_id'] for x in stations['value']}
+        ids = {x['title']: x['station_id'] for x in stations['value']}
         codes = UzTownCode()
         codes.put_all(ids)
         pprint.pprint(stations)
+        # self.cookies = resp.cookies
         return stations
 
     def dump_cookies(self):
@@ -149,15 +150,21 @@ class UzCrawler:
 
     def search(self, from_city, to_city, when):
         url = 'ru/purchase/search/'
-        coder = UzTownCode()
-        from_city_id = coder.get(from_city)
-        to_city_id = coder.get(to_city)
+        for times in range(2):
+            coder = UzTownCode()
+            from_city_id = coder.get(from_city)
+            to_city_id = coder.get(to_city)
 
-        if not from_city_id:
-            print('I do not know id for ' + from_city)
-            return None
-        if not to_city_id:
-            print('I do not know id for ' + to_city)
+            if not from_city_id:
+                print('I do not know id for ' + from_city)
+                self.station(from_city)
+            elif not to_city_id:
+                print('I do not know id for ' + to_city)
+                self.station(to_city)
+            else:
+                break
+        else:
+            print('I can not get id for one of the cities')
             return None
 
         data = dict()
@@ -172,6 +179,10 @@ class UzCrawler:
         data['search'] = ''
 
         resp = self.uz_post(url, data)
+        if not resp.ok:
+            print('Can not get trains information:', resp.status_code)
+            self.dump_cookies()
+            return None
         trains = json.loads(resp.content.decode('utf-8'))
         if not trains['error']:
             trains = trains['value']
@@ -227,23 +238,18 @@ class UzCrawler:
 
 def get_start_page():
     crawler = UzCrawler()
-    resp = crawler.get()
-    for h in resp.headers:
-        pprint.pprint(h)
-    pprint.pprint(resp.cookies)
-    pprint.pprint(resp.content)
-    crawler.dump_cookies()
+    crawler.get()
     print('Search stations')
     crawler.station('Киев')
-
-    # print('Search trains')
-    # trains = crawler.search('Киев-Пассажирский', 'Харьков-Пасс', '24.12.2015')
-    # pprint.pprint(trains)
-    # crawler.dump_cookies()
-    # time.sleep(5)
-    # for x in range(5):
-    #     crawler.coaches()
-    #     time.sleep(1)
+    crawler.station('Харьков')
+    print('Search trains')
+    trains = crawler.search('Киев', 'Харьков', '24.12.2015')
+    pprint.pprint(trains)
+    crawler.dump_cookies()
+    time.sleep(5)
+    for x in range(1):
+        crawler.coaches()
+        time.sleep(1)
 
 if __name__ == '__main__':
     print('Test UzCrawler')
