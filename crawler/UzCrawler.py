@@ -71,8 +71,9 @@ class Train:
 
 
 class UzCrawler:
-    def __init__(self):
+    def __init__(self, lang='ru'):
         self.user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36'
+        self.lang = lang
         self.cookies = None
         self.token = ''
         self.server = ''
@@ -101,9 +102,9 @@ class UzCrawler:
         return resp
 
     def station(self, name):
-        url = 'ru/purchase/station/'
+        url = '%s/purchase/station/' % self.lang
         add_headers = dict()
-        add_headers['Referer'] = 'http://booking.uz.gov.ua/ru/'
+        add_headers['Referer'] = 'http://booking.uz.gov.ua/%s/' % self.lang
         add_headers['Host'] = 'booking.uz.gov.ua'
         add_headers['Proxy-Connection'] = 'keep-alive'
         add_headers['Origin'] = 'http://booking.uz.gov.ua'
@@ -137,7 +138,7 @@ class UzCrawler:
         add_headers['GV-Unique-Host'] = 1
         add_headers['GV-Ajax'] = 1
         add_headers['GV-Screen'] = '1920x1080'
-        add_headers['GV-Referer'] = 'http://booking.uz.gov.ua/ru/'
+        add_headers['GV-Referer'] = 'http://booking.uz.gov.ua/%s/' % self.lang
         add_headers['Referer'] = 'http://booking.uz.gov.ua/ru/'
         add_headers['Host'] = 'booking.uz.gov.ua'
         add_headers['Proxy-Connection'] = 'keep-alive'
@@ -149,7 +150,7 @@ class UzCrawler:
         return resp
 
     def search(self, from_city, to_city, when):
-        url = 'ru/purchase/search/'
+        url = '%s/purchase/search/' % self.lang
         for times in range(2):
             coder = UzTownCode()
             from_city_id = coder.get(from_city)
@@ -196,7 +197,7 @@ class UzCrawler:
         return trains
 
     def coaches(self, train='724K', coach_type='C2'):
-        url = 'ru/purchase/coaches/'
+        url = '%s/purchase/coaches/' % self.lang
         data = dict()
         data['station_id_from'] = 2200001
         data['station_id_till'] = 2204001
@@ -216,7 +217,7 @@ class UzCrawler:
         return resp
 
     def coach(self, train='724K', coach_type='C2'):
-        url = 'ru/purchase/coaches/'
+        url = '%s/purchase/coaches/' % self.lang
         data = dict()
         data['station_id_from'] = 2200001
         data['station_id_till'] = 2204001

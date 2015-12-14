@@ -12,7 +12,12 @@ def print_train(train):
 
 
 def search(from_city, till_city, date):
-    crawler = UzCrawler.UzCrawler()
+    assert isinstance(from_city, str)
+    if 'a' <= from_city.lower()[0] <= 'z':
+        lang = 'en'
+    else:
+        lang = 'ru'
+    crawler = UzCrawler.UzCrawler(lang)
     crawler.get()
     trains = crawler.search(from_city, till_city, date)
     for t in trains:
