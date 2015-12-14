@@ -31,11 +31,15 @@ class UzTownCode:
             self.save()
 
     def put_all(self, data):
-        self.database.update(data)
-        self.save()
+        is_dirty = False
+        for station, station_id in data.items():
+            if station not in self.database:
+                self.database[station] = station_id
+                is_dirty = True
+        if is_dirty:
+            self.save()
 
     def save(self):
-        print('Save database')
         with open(self.path, 'wb') as f:
             pickle.dump(self.database, f)
 
@@ -71,12 +75,14 @@ class Train:
 
 
 class UzCrawler:
-    def __init__(self):
+    def __init__(self, lang='ru'):
         self.user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36'
+        self.lang = lang
         self.cookies = None
         self.token = ''
         self.server = ''
         self.session_id = ''
+        self.last_coaches = list()
 
     def get(self):
         page = UZ_BASE
@@ -100,6 +106,27 @@ class UzCrawler:
                 self.session_id = c.value
         return resp
 
+    def station(self, name):
+        url = '%s/purchase/station/' % self.lang
+        add_headers = dict()
+        add_headers['Referer'] = 'http://booking.uz.gov.ua/%s/' % self.lang
+        add_headers['Host'] = 'booking.uz.gov.ua'
+        add_headers['Proxy-Connection'] = 'keep-alive'
+        add_headers['Origin'] = 'http://booking.uz.gov.ua'
+        add_headers['User-Agent'] = self.user_agent
+        resp = requests.post(UZ_BASE + url + name + '/',
+                             cookies=self.cookies,
+                             headers=add_headers)
+        if not resp.ok:
+            print(resp.status_code)
+            return None
+        stations = json.loads(resp.content.decode('utf-8'))
+        ids = {x['title']: x['station_id'] for x in stations['value']}
+        codes = UzTownCode()
+        codes.put_all(ids)
+        # self.cookies = resp.cookies
+        return stations['value']
+
     def dump_cookies(self):
         if not self.cookies:
             print('Cookies is not found')
@@ -115,7 +142,7 @@ class UzCrawler:
         add_headers['GV-Unique-Host'] = 1
         add_headers['GV-Ajax'] = 1
         add_headers['GV-Screen'] = '1920x1080'
-        add_headers['GV-Referer'] = 'http://booking.uz.gov.ua/ru/'
+        add_headers['GV-Referer'] = 'http://booking.uz.gov.ua/%s/' % self.lang
         add_headers['Referer'] = 'http://booking.uz.gov.ua/ru/'
         add_headers['Host'] = 'booking.uz.gov.ua'
         add_headers['Proxy-Connection'] = 'keep-alive'
@@ -127,16 +154,22 @@ class UzCrawler:
         return resp
 
     def search(self, from_city, to_city, when):
-        url = 'ru/purchase/search/'
-        coder = UzTownCode()
-        from_city_id = coder.get(from_city)
-        to_city_id = coder.get(to_city)
+        url = '%s/purchase/search/' % self.lang
+        for times in range(2):
+            coder = UzTownCode()
+            from_city_id = coder.get(from_city)
+            to_city_id = coder.get(to_city)
 
-        if not from_city_id:
-            print('I do not know id for ' + from_city)
-            return None
-        if not to_city_id:
-            print('I do not know id for ' + to_city)
+            if not from_city_id:
+                print('I do not know id for ' + from_city)
+                self.station(from_city)
+            elif not to_city_id:
+                print('I do not know id for ' + to_city)
+                self.station(to_city)
+            else:
+                break
+        else:
+            print('I can not get id for one of the cities')
             return None
 
         data = dict()
@@ -151,27 +184,32 @@ class UzCrawler:
         data['search'] = ''
 
         resp = self.uz_post(url, data)
+        if not resp.ok:
+            print('Can not get trains information:', resp.status_code)
+            self.dump_cookies()
+            return None
         trains = json.loads(resp.content.decode('utf-8'))
         if not trains['error']:
             trains = trains['value']
         else:
-            print('Error in search')
-            pprint.pprint(trains)
             return None
         # self.cookies = resp.cookies
         trains = [Train(x) for x in trains]
 
         return trains
 
-    def coaches(self, train='724K', coach_type='C2'):
-        url = 'ru/purchase/coaches/'
+    def coaches(self, train, coach_type, station_from, station_to):
+        assert isinstance(train, Train)
+        url = '%s/purchase/coaches/' % self.lang
+
+        coder = UzTownCode()
         data = dict()
-        data['station_id_from'] = 2200001
-        data['station_id_till'] = 2204001
-        data['train'] = train
+        data['station_id_from'] = coder.get(station_from)
+        data['station_id_till'] = coder.get(station_to)
+        data['train'] = train.num
         data['coach_type'] = coach_type
-        data['model'] = 1
-        data['date_dep'] = 1451129700
+        data['model'] = train.model
+        data['date_dep'] = train.source.date
         data['another_ec'] = 0
         data['round_trip'] = 0
 
@@ -180,20 +218,35 @@ class UzCrawler:
             print(resp.status_code)
             return None
         coaches = json.loads(resp.content.decode('utf-8'))
-        pprint.pprint(coaches)
+        coaches = coaches['value']
+        self.last_coaches = coaches['coaches']
         return resp
 
-    def coach(self, train='724K', coach_type='C2'):
-        url = 'ru/purchase/coaches/'
+    def coach(self, train, coach_num, station_from, station_to):
+        assert isinstance(train, Train)
+        url = '%s/purchase/coach/' % self.lang
         data = dict()
-        data['station_id_from'] = 2200001
-        data['station_id_till'] = 2204001
-        data['train'] = train
-        data['coach_type'] = coach_type
-        data['model'] = 1
-        data['date_dep'] = 1451129700
-        data['another_ec'] = 0
-        data['round_trip'] = 0
+        coder = UzTownCode()
+
+        data['station_id_from'] = coder.get(station_from)
+        data['station_id_till'] = coder.get(station_to)
+        data['train'] = train.num
+
+        for c in self.last_coaches:
+            if c['num'] == coach_num:
+                coach_class = c['coach_class']
+                coach_type_id = c['coach_type_id']
+                break
+        else:
+            print('Can not find this coach in the train.')
+            return None
+
+        data['coach_num'] = coach_num
+        data['coach_class'] = coach_class
+        data['coach_type_id'] = coach_type_id
+
+        data['date_dep'] = train.source.date
+        data['change_scheme'] = 1
 
         resp = self.uz_post(url, data)
         if not resp.ok:
@@ -206,20 +259,22 @@ class UzCrawler:
 
 def get_start_page():
     crawler = UzCrawler()
-    resp = crawler.get()
-    for h in resp.headers:
-        pprint.pprint(h)
-    pprint.pprint(resp.cookies)
-    pprint.pprint(resp.content)
-    crawler.dump_cookies()
+    crawler.get()
+    print('Search stations')
+
+    station_from = 'Киев'
+    station_to = 'Харьков'
+
+    crawler.station(station_from)
+    crawler.station(station_to)
     print('Search trains')
-    trains = crawler.search('Киев-Пассажирский', 'Харьков-Пасс', '24.12.2015')
-    pprint.pprint(trains)
-    crawler.dump_cookies()
-    time.sleep(5)
-    for x in range(5):
-        crawler.coaches()
+    trains = crawler.search(station_from, station_to, '24.12.2015')
+    train = trains[0]
+    for x in range(1):
+        crawler.coaches(train, train.coaches[0]['letter'], station_from, station_to)
         time.sleep(1)
+    crawler.coach(train, 3, station_from, station_to)
+
 
 if __name__ == '__main__':
     print('Test UzCrawler')
