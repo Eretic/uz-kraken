@@ -100,6 +100,27 @@ class UzCrawler:
                 self.session_id = c.value
         return resp
 
+    def station(self, name):
+        url = 'ru/purchase/station/'
+        add_headers = dict()
+        add_headers['Referer'] = 'http://booking.uz.gov.ua/ru/'
+        add_headers['Host'] = 'booking.uz.gov.ua'
+        add_headers['Proxy-Connection'] = 'keep-alive'
+        add_headers['Origin'] = 'http://booking.uz.gov.ua'
+        add_headers['User-Agent'] = self.user_agent
+        resp = requests.post(UZ_BASE + url + name + '/',
+                             cookies=self.cookies,
+                             headers=add_headers)
+        if not resp.ok:
+            print(resp.status_code)
+            return None
+        stations = json.loads(resp.content.decode('utf-8'))
+        ids = {x['title']:x['station_id'] for x in stations['value']}
+        codes = UzTownCode()
+        codes.put_all(ids)
+        pprint.pprint(stations)
+        return stations
+
     def dump_cookies(self):
         if not self.cookies:
             print('Cookies is not found')
@@ -212,14 +233,17 @@ def get_start_page():
     pprint.pprint(resp.cookies)
     pprint.pprint(resp.content)
     crawler.dump_cookies()
-    print('Search trains')
-    trains = crawler.search('Киев-Пассажирский', 'Харьков-Пасс', '24.12.2015')
-    pprint.pprint(trains)
-    crawler.dump_cookies()
-    time.sleep(5)
-    for x in range(5):
-        crawler.coaches()
-        time.sleep(1)
+    print('Search stations')
+    crawler.station('Киев')
+
+    # print('Search trains')
+    # trains = crawler.search('Киев-Пассажирский', 'Харьков-Пасс', '24.12.2015')
+    # pprint.pprint(trains)
+    # crawler.dump_cookies()
+    # time.sleep(5)
+    # for x in range(5):
+    #     crawler.coaches()
+    #     time.sleep(1)
 
 if __name__ == '__main__':
     print('Test UzCrawler')
