@@ -8,7 +8,7 @@ install:
 # command to run tests
 script:
   - cd crawler
-  - python JJDecoder.py
+  - coverage run JJDecoder.py
 # Codecov staff
 before_install:
   - pip install codecov
