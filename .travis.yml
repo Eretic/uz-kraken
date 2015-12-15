@@ -12,5 +12,7 @@ script:
 # Codecov staff
 before_install:
   - pip install codecov
+  - pip install tox
 after_success:
+  - tox -e coverage-report
   - codecov
