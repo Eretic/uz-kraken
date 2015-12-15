@@ -9,3 +9,8 @@ install:
 script:
   - cd crawler
   - python JJDecoder.py
+# Codecov staff
+before_install:
+  - pip install codecov
+after_success:
+  - codecov
