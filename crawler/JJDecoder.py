@@ -261,14 +261,13 @@ def decode(text):
 class JJDecoderTest(unittest.TestCase):
     def test(self):
         with open('jjdecoder_tests.txt', 'r') as tests:
-            req = tests.readline()
-            exp = tests.readline().strip()
-            result = decode(req)
-            self.assertEqual(exp, result)
-            req = tests.readline()
-            exp = tests.readline()
-            result = decode(req)
-            self.assertEqual(exp, result)
+            while True:
+                req = tests.readline()
+                if not req:
+                    break
+                exp = tests.readline().strip()
+                result = decode(req)
+                self.assertEqual(exp, result)
 
 
 if __name__ == '__main__':
