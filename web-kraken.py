@@ -1,9 +1,12 @@
 # coding=utf-8
+import os
+
 from flask import Flask, request
 from crawler import UzCrawler
 
 
 app = Flask(__name__)
+app.config.from_object(os.environ['APP_SETTINGS'])
 
 
 def print_train(train):
@@ -15,9 +18,11 @@ def print_train(train):
     out_str += '</pre>'
     return out_str
 
+
 @app.route('/')
 def hello():
     return 'Hello from Kraken'
+
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -49,4 +54,4 @@ def search():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
