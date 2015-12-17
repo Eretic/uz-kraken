@@ -1,1 +1,1 @@
-web: gunicorn web-kraken:app --log-file -
+web: gunicorn webkraken:app --log-file -

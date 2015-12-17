@@ -2,11 +2,15 @@
 import os
 
 from flask import Flask, request
+from flask.ext.sqlalchemy import SQLAlchemy
 from crawler import UzCrawler
 
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
+db = SQLAlchemy(app)
+
+from model import Station
 
 
 def print_train(train):
