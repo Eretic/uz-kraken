@@ -1,9 +1,16 @@
 # coding=utf-8
+import datetime
+
+import os
+
 from flask import Flask, request
+from flask.ext.sqlalchemy import SQLAlchemy
 from crawler import UzCrawler
 
 
 app = Flask(__name__)
+app.config.from_object(os.environ['APP_SETTINGS'])
+db = SQLAlchemy(app)
 
 
 def print_train(train):
@@ -15,15 +22,22 @@ def print_train(train):
     out_str += '</pre>'
     return out_str
 
+
 @app.route('/')
 def hello():
     return 'Hello from Kraken'
+
 
 @app.route('/search', methods=['GET'])
 def search():
     from_city = request.args.get('from_city', '')
     till_city = request.args.get('till_city', '')
     date = request.args.get('date', '')
+
+    req = Station.Request(type='search', request=str(request.args), time=datetime.datetime.utcnow())
+    db.session.add(req)
+    db.session.commit()
+
     if 'a' <= from_city.lower()[0] <= 'z':
         lang = 'en'
     else:
@@ -49,4 +63,6 @@ def search():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
+
+from model import Station
