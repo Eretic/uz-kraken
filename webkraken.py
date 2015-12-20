@@ -1,4 +1,6 @@
 # coding=utf-8
+import datetime
+
 import os
 
 from flask import Flask, request
@@ -9,8 +11,6 @@ from crawler import UzCrawler
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 db = SQLAlchemy(app)
-
-from model import Station
 
 
 def print_train(train):
@@ -33,6 +33,11 @@ def search():
     from_city = request.args.get('from_city', '')
     till_city = request.args.get('till_city', '')
     date = request.args.get('date', '')
+
+    req = Station.Request(type='search', request=str(request.args), time=datetime.datetime.utcnow())
+    db.session.add(req)
+    db.session.commit()
+
     if 'a' <= from_city.lower()[0] <= 'z':
         lang = 'en'
     else:
@@ -59,3 +64,5 @@ def search():
 
 if __name__ == '__main__':
     app.run()
+
+from model import Station
