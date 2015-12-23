@@ -63,12 +63,6 @@ def decode(text):
          "$___+", "$__$+", "$_$_+", "$_$$+",
          "$$__+", "$$_$+", "$$$_+", "$$$$+"]
 
-    # # lotu
-    # str_l = "(![]+\"\")[" + gv + "._$_]+"
-    # str_o = gv + "._$+"
-    # str_t = gv + ".__+"
-    # str_u = gv + "._+"
-
     # 0123456789abcdef
     str_hex = gv + "."
 
@@ -120,7 +114,7 @@ def decode(text):
                                 break
                     else:
                         break  # done
-                out(''.join([chr(x) for x in ch_str]))
+                out(''.join(['%x' % x for x in ch_str]))
                 continue
             elif data.startswith(str_lower):
                 data = data[len(str_lower):]  # skip sig
@@ -160,6 +154,7 @@ def decode(text):
                                 break
                     else:
                         break
+
                 out(chr(int(ch_str, 8)) + ch_lotux)
                 continue  # step out of the while loop
             else:  # "S ----> "SR or "S+
@@ -193,6 +188,7 @@ def decode(text):
                             return
                         data = data[len(str_upper):]
                         ch_str = []
+                        ch_lotux = ''
                         for j in range(10):
                             if j > 1:
                                 data, ch_lotux = lotu(gv, data)
@@ -208,7 +204,7 @@ def decode(text):
                                         break
                             else:
                                 break  # done
-                        out(''.join([chr(x) for x in ch_str]))
+                        out(chr(int(''.join(['%x' % x for x in ch_str]), 16)))
                         break  # step out of the while loop
                     elif data.startswith(str_lower):
                         if match == 0:
