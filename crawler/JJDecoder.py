@@ -1,5 +1,4 @@
 import re
-import unittest
 
 
 OUTPUT = ''
@@ -256,19 +255,3 @@ def decode(text):
         break
 
     return OUTPUT
-
-
-class JJDecoderTest(unittest.TestCase):
-    def test(self):
-        with open('jjdecoder_tests.txt', 'r') as tests:
-            while True:
-                req = tests.readline()
-                if not req:
-                    break
-                exp = tests.readline().strip()
-                result = decode(req)
-                self.assertEqual(exp, result)
-
-
-if __name__ == '__main__':
-    unittest.main()
