@@ -1,12 +1,12 @@
 # coding=utf-8
-import os.path
-import time
 import json
 import pickle
 import pprint
-import requests
+import time
 
-from crawler import JJDecoder
+import os.path
+import requests
+from kraken.crawler import JJDecoder
 
 UZ_BASE = 'http://booking.uz.gov.ua/'
 

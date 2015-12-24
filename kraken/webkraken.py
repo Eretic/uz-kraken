@@ -1,12 +1,11 @@
 # coding=utf-8
 import datetime
 
-import os
-
-from flask import Flask, request
 from flask.ext.sqlalchemy import SQLAlchemy
-from crawler import UzCrawler
 
+import os
+from flask import Flask, request
+from kraken.crawler import UzCrawler
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -65,4 +64,4 @@ def search():
 if __name__ == '__main__':
     app.run()
 
-from model import Station
+from kraken.model import Station

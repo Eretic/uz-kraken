@@ -1,6 +1,7 @@
-import os
 import unittest
-from crawler import JJDecoder
+
+import os
+from kraken.crawler import JJDecoder
 
 
 def get_real_path(rel_path):

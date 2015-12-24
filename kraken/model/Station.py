@@ -1,4 +1,4 @@
-from webkraken import db
+from kraken.webkraken import db
 
 
 class Station(db.Model):

@@ -2,7 +2,7 @@
 # coding=utf-8
 import sys
 
-from crawler import UzCrawler
+from kraken.crawler import UzCrawler
 
 
 def print_train(train):

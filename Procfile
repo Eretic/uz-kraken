@@ -1,1 +1,1 @@
-web: gunicorn webkraken:app --log-file -
+web: gunicorn runprod_heroku:app --log-file -
